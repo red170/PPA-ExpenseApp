@@ -2,18 +2,12 @@ import 'package:flutter/material.dart';
 import '../models/expense.dart'; // Importa el modelo de gasto
 import '../database/database_helper.dart'; // Importa el helper de base de datos
 import 'add_edit_expense_screen.dart'; // Importa la pantalla para agregar/editar gastos
-import 'package:intl/intl.dart'; // Necesario para formatear la fecha y moneda (agregar dependencia intl en pubspec.yaml)
-
-// Asegúrate de agregar la dependencia 'intl' en tu archivo pubspec.yaml:
-// dependencies:
-//   flutter:
-//     sdk: flutter
-//   ... otras dependencias ...
-//   intl: ^0.18.0 # Agrega esta línea (o la versión más reciente)
+import 'package:intl/intl.dart'; // Importa el paquete intl para formatear fecha y moneda
 
 // Pantalla principal que muestra el resumen de gastos y la lista de transacciones.
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({Key? key}) : super(key: key);
+  // Usando la sintaxis de super parameter para el key
+  const HomeScreen({super.key});
 
   @override
   _HomeScreenState createState() => _HomeScreenState();
@@ -33,6 +27,10 @@ class _HomeScreenState extends State<HomeScreen> {
   // Carga los gastos desde la base de datos y actualiza el estado.
   Future<void> _loadExpenses() async {
     List<Expense> expenses = await _dbHelper.getExpenses();
+
+    // Verifica si el widget aún está montado antes de llamar a setState
+    if (!mounted) return;
+
     double total = 0.0;
     for (var expense in expenses) {
       total += expense.amount;
@@ -54,6 +52,9 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
 
+    // Verifica si el widget aún está montado antes de usar el resultado o llamar a funciones que actualizan la UI
+    if (!mounted) return;
+
     // Si el resultado es true, significa que se guardó o eliminó un gasto,
     // por lo que recargamos la lista de gastos.
     if (result == true) {
@@ -64,7 +65,7 @@ class _HomeScreenState extends State<HomeScreen> {
   // Muestra un diálogo de confirmación para eliminar un gasto.
   void _confirmDeleteExpense(Expense expense) {
     showDialog(
-      context: context,
+      context: context, // Es seguro usar context aquí porque showDialog es síncrono
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text('Confirmar Eliminación'),
@@ -80,6 +81,10 @@ class _HomeScreenState extends State<HomeScreen> {
               child: const Text('Eliminar'),
               onPressed: () async {
                 await _dbHelper.deleteExpense(expense.id!); // Elimina el gasto de la base de datos
+
+                // Verifica si el widget aún está montado antes de actualizar la UI
+                if (!mounted) return;
+
                 _loadExpenses(); // Recarga la lista de gastos
                 Navigator.of(context).pop(); // Cierra el diálogo
               },
@@ -93,7 +98,8 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     // Formatea el total de gastos a moneda local.
-    final currencyFormat = NumberFormat.currency(locale: 'es_SV', symbol: '\$'); // Ejemplo para El Salvador
+    // Asegúrate de que 'es_SV' sea el locale correcto para El Salvador o usa uno genérico como 'en_US' si prefieres.
+    final currencyFormat = NumberFormat.currency(locale: 'es_SV', symbol: '\$');
 
     return Scaffold(
       appBar: AppBar(
@@ -142,7 +148,7 @@ class _HomeScreenState extends State<HomeScreen> {
               itemBuilder: (context, index) {
                 final expense = _expenses[index];
                 // Formatea la fecha del gasto.
-                final dateFormat = DateFormat('dd/MM/yyyy');
+                final dateFormat = DateFormat('dd/MM/yyyy'); // DateFormat se usa directamente
 
                 return Card(
                   margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
