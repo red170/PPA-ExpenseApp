@@ -6,8 +6,11 @@ import 'package:intl/intl.dart'; // Para dar formato a números y fechas
 
 // Esta es la pantalla principal que muestra los gastos y el total
 class HomeScreen extends StatefulWidget {
-  // Constructor básico
-  const HomeScreen({super.key});
+  // Función para cambiar el tema, recibida desde MyApp
+  final VoidCallback toggleTheme;
+
+  // Constructor que recibe la función para cambiar el tema
+  const HomeScreen({super.key, required this.toggleTheme});
 
   @override
   _HomeScreenState createState() => _HomeScreenState();
@@ -111,11 +114,22 @@ class _HomeScreenState extends State<HomeScreen> {
     // Herramienta para mostrar el total de gastos como moneda
     final currencyFormat = NumberFormat.currency(locale: 'es_SV', symbol: '\$'); // Formato para El Salvador
 
-    // Scaffold es la estructura base de la pantalla (barra de arriba, cuerpo, etc.)
+    // Scaffold es la estructura básica de la pantalla (barra superior, cuerpo, etc.)
     return Scaffold(
       appBar: AppBar(
         title: const Text('Control de Gastos Personales'), // Título en la barra de arriba
         centerTitle: true, // Centra el título
+        actions: [ // Acciones en la barra de la aplicación (como botones de icono)
+          // Botón para cambiar el tema (modo claro/oscuro)
+          IconButton(
+            // Icono cambia dependiendo del brillo actual del tema
+            icon: Icon(Theme.of(context).brightness == Brightness.dark
+                ? Icons.lightbulb_outline // Icono de bombilla si está en modo oscuro
+                : Icons.dark_mode), // Icono de luna si está en modo claro (CORREGIDO)
+            tooltip: 'Cambiar Tema', // Texto que aparece al mantener presionado
+            onPressed: widget.toggleTheme, // Llama a la función para cambiar el tema recibida de MyApp
+          ),
+        ],
       ),
       body: Column( // Organiza los elementos verticalmente
         children: [
@@ -134,6 +148,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   const SizedBox(height: 8.0), // Espacio vertical
                   Text(
                     currencyFormat.format(_totalExpenses), // Muestra el total formateado
+                    // El color rojo puede no verse bien en modo oscuro, podrías ajustarlo
                     style: const TextStyle(fontSize: 24.0, color: Colors.redAccent, fontWeight: FontWeight.bold), // Estilo del texto del total
                   ),
                 ],
@@ -167,7 +182,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0), // Espacio alrededor de la tarjeta del gasto
                   child: ListTile( // Un elemento de lista con un icono, título y subtítulo
                     leading: CircleAvatar( // El círculo a la izquierda con el monto
-                      backgroundColor: Theme.of(context).primaryColor, // Color del círculo
+                      backgroundColor: Theme.of(context).primaryColor, // Color del círculo (se adapta al tema)
                       radius: 18.0, // Tamaño del círculo
                       child: Padding(
                         padding: const EdgeInsets.all(2.0), // Espacio dentro del círculo
@@ -194,7 +209,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         // Botón para eliminar el gasto
                         IconButton(
                           icon: const Icon(Icons.delete), // Icono de bote de basura
-                          color: Colors.red, // Color rojo para el icono de borrar
+                          color: Colors.red, // Color rojo para el icono de borrar (puede necesitar ajuste en modo oscuro)
                           onPressed: () {
                             _confirmDeleteExpense(expense); // Al tocar, muestra el diálogo de confirmación
                           },
