@@ -155,9 +155,15 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: ListTile(
                     leading: CircleAvatar(
                       backgroundColor: Theme.of(context).primaryColor,
-                      child: Text(
-                        currencyFormat.format(expense.amount), // Muestra el monto en el círculo
-                        style: const TextStyle(color: Colors.white, fontSize: 12.0),
+                      radius: 18.0, // Reducido el radio del CircleAvatar
+                      child: Padding(
+                        padding: const EdgeInsets.all(2.0), // Añadido un pequeño padding interno
+                        child: FittedBox( // Envuelve el texto en FittedBox para que se ajuste
+                          child: Text(
+                            currencyFormat.format(expense.amount), // Muestra el monto en el círculo
+                            style: const TextStyle(color: Colors.white, fontSize: 10.0), // Reducido el tamaño de la fuente
+                          ),
+                        ),
                       ),
                     ),
                     title: Text(expense.description), // Descripción del gasto
