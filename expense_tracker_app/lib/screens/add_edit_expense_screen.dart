@@ -1,32 +1,41 @@
 import 'package:flutter/material.dart';
-import '../models/expense.dart'; // Importa el modelo de gasto
-import '../database/database_helper.dart'; // Importa el helper de base de datos
-import 'package:intl/intl.dart'; // Necesario para formatear la fecha (asegúrate de tener la dependencia 'intl')
+import '../models/expense.dart'; // Importa cómo se define un gasto
+import '../database/database_helper.dart'; // Importa las funciones para guardar y leer gastos
+import 'package:intl/intl.dart'; // Para dar formato a la fecha
 
-// Pantalla para agregar o editar un gasto.
+// Pantalla para añadir un gasto nuevo o cambiar uno que ya existe
 class AddEditExpenseScreen extends StatefulWidget {
-  final Expense? expense; // El gasto a editar (opcional, si es nulo, es para agregar)
+  // Este es el gasto que vamos a editar (si es nulo, es un gasto nuevo)
+  final Expense? expense;
 
-  const AddEditExpenseScreen({Key? key, this.expense}) : super(key: key);
+  // Constructor del widget
+  const AddEditExpenseScreen({super.key, this.expense});
 
   @override
   _AddEditExpenseScreenState createState() => _AddEditExpenseScreenState();
 }
 
+// El estado interno de la pantalla (maneja los datos y la interacción)
 class _AddEditExpenseScreenState extends State<AddEditExpenseScreen> {
-  final _formKey = GlobalKey<FormState>(); // Clave global para el formulario
-  final TextEditingController _descriptionController = TextEditingController(); // Controlador para el campo descripción
-  final TextEditingController _categoryController = TextEditingController(); // Controlador para el campo categoría
-  final TextEditingController _amountController = TextEditingController(); // Controlador para el campo monto
-  DateTime _selectedDate = DateTime.now(); // Fecha seleccionada (por defecto, la fecha actual)
-  final DatabaseHelper _dbHelper = DatabaseHelper(); // Instancia del helper de base de datos
+  // Una clave para validar los campos del formulario
+  final _formKey = GlobalKey<FormState>();
+  // Controladores para obtener el texto de los campos de entrada
+  final TextEditingController _descriptionController = TextEditingController();
+  final TextEditingController _categoryController = TextEditingController();
+  final TextEditingController _amountController = TextEditingController();
+  // La fecha seleccionada para el gasto, por defecto es hoy
+  DateTime _selectedDate = DateTime.now();
+  // Una herramienta para interactuar con la base de datos
+  final DatabaseHelper _dbHelper = DatabaseHelper();
 
-  bool get _isEditing => widget.expense != null; // Verifica si estamos editando un gasto existente
+  // Verifica si estamos en modo edición (si hay un gasto para editar)
+  bool get _isEditing => widget.expense != null;
 
+  // Se ejecuta cuando la pantalla se crea por primera vez
   @override
   void initState() {
     super.initState();
-    // Si estamos editando, precarga los datos del gasto en los controladores.
+    // Si estamos editando, llena los campos del formulario con los datos del gasto
     if (_isEditing) {
       _descriptionController.text = widget.expense!.description;
       _categoryController.text = widget.expense!.category;
@@ -35,129 +44,136 @@ class _AddEditExpenseScreenState extends State<AddEditExpenseScreen> {
     }
   }
 
+  // Se ejecuta cuando la pantalla ya no se usa
   @override
   void dispose() {
-    // Limpia los controladores cuando el widget se desecha.
+    // Limpia los controladores de texto para liberar memoria
     _descriptionController.dispose();
     _categoryController.dispose();
     _amountController.dispose();
     super.dispose();
   }
 
-  // Muestra un selector de fecha.
+  // Muestra un calendario para que el usuario elija una fecha
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: _selectedDate, // Fecha inicial del selector
-      firstDate: DateTime(2000), // Fecha mínima seleccionable
-      lastDate: DateTime(2101), // Fecha máxima seleccionable
+      initialDate: _selectedDate, // La fecha que se muestra al abrir el calendario
+      firstDate: DateTime(2000), // La fecha más antigua que se puede elegir
+      lastDate: DateTime(2101), // La fecha más nueva que se puede elegir
     );
+    // Si se eligió una fecha diferente, actualiza la fecha seleccionada
     if (picked != null && picked != _selectedDate) {
       setState(() {
-        _selectedDate = picked; // Actualiza la fecha seleccionada
+        _selectedDate = picked;
       });
     }
   }
 
-  // Guarda o actualiza el gasto en la base de datos.
+  // Guarda la información del gasto en la base de datos
   Future<void> _saveExpense() async {
-    // Valida el formulario.
+    // Si todos los campos del formulario son válidos
     if (_formKey.currentState!.validate()) {
+      // Crea un objeto Expense con la información de los campos
       final newExpense = Expense(
-        id: _isEditing ? widget.expense!.id : null, // Si edita, mantiene el ID; si agrega, es nulo para auto-incremento
+        id: _isEditing ? widget.expense!.id : null, // Mantiene el ID si edita, si no, es nuevo
         description: _descriptionController.text,
         category: _categoryController.text,
-        amount: double.parse(_amountController.text), // Convierte el texto a double
+        amount: double.parse(_amountController.text), // Convierte el texto del monto a número
         date: _selectedDate,
       );
 
+      // Si estamos editando, actualiza el gasto en la base de datos
       if (_isEditing) {
-        await _dbHelper.updateExpense(newExpense); // Actualiza el gasto existente
+        await _dbHelper.updateExpense(newExpense);
       } else {
-        await _dbHelper.insertExpense(newExpense); // Inserta un nuevo gasto
+        // Si es un gasto nuevo, lo inserta en la base de datos
+        await _dbHelper.insertExpense(newExpense);
       }
 
-      // Regresa a la pantalla anterior indicando que se realizó una acción (true).
+      // Cierra esta pantalla y regresa a la anterior, indicando que algo cambió (true)
       Navigator.pop(context, true);
     }
   }
 
+  // Dibuja la interfaz visual de esta pantalla
   @override
   Widget build(BuildContext context) {
-    // Formatea la fecha seleccionada para mostrarla.
+    // Herramienta para mostrar la fecha en un formato legible
     final dateFormat = DateFormat('dd/MM/yyyy');
 
+    // Scaffold es la estructura básica de la pantalla (barra superior, cuerpo, etc.)
     return Scaffold(
       appBar: AppBar(
-        title: Text(_isEditing ? 'Editar Gasto' : 'Agregar Nuevo Gasto'), // Título según si edita o agrega
-        centerTitle: true,
+        title: Text(_isEditing ? 'Editar Gasto' : 'Agregar Nuevo Gasto'), // Título cambia si edita o agrega
+        centerTitle: true, // Centra el título en la barra superior
       ),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(16.0), // Espacio alrededor del contenido principal
         child: Form(
-          key: _formKey, // Asigna la clave global al formulario
-          child: ListView(
+          key: _formKey, // Vincula la clave al formulario para validación
+          child: ListView( // Permite hacer scroll si el contenido es largo
             children: <Widget>[
-              // Campo de texto para la descripción.
+              // Campo para escribir la descripción del gasto
               TextFormField(
                 controller: _descriptionController,
-                decoration: const InputDecoration(labelText: 'Descripción'),
-                validator: (value) {
+                decoration: const InputDecoration(labelText: 'Descripción'), // Etiqueta del campo
+                validator: (value) { // Regla para validar el campo
                   if (value == null || value.isEmpty) {
-                    return 'Por favor ingresa una descripción'; // Validación: campo no vacío
+                    return 'Por favor ingresa una descripción'; // Mensaje si está vacío
                   }
-                  return null;
+                  return null; // Si está bien, no hay mensaje de error
                 },
               ),
-              const SizedBox(height: 12.0),
-              // Campo de texto para la categoría.
+              const SizedBox(height: 12.0), // Espacio vertical
+              // Campo para escribir la categoría del gasto
               TextFormField(
                 controller: _categoryController,
                 decoration: const InputDecoration(labelText: 'Categoría'),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Por favor ingresa una categoría'; // Validación: campo no vacío
+                    return 'Por favor ingresa una categoría';
                   }
                   return null;
                 },
               ),
-              const SizedBox(height: 12.0),
-              // Campo de texto para el monto (solo números).
+              const SizedBox(height: 12.0), // Espacio vertical
+              // Campo para escribir el monto del gasto (solo números)
               TextFormField(
                 controller: _amountController,
                 decoration: const InputDecoration(labelText: 'Monto'),
-                keyboardType: TextInputType.numberWithOptions(decimal: true), // Teclado numérico con decimales
+                keyboardType: TextInputType.numberWithOptions(decimal: true), // Muestra teclado numérico
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Por favor ingresa un monto'; // Validación: campo no vacío
+                    return 'Por favor ingresa un monto';
                   }
-                  if (double.tryParse(value) == null) {
-                    return 'Por favor ingresa un número válido'; // Validación: debe ser un número
+                  if (double.tryParse(value) == null) { // Intenta convertir el texto a número
+                    return 'Por favor ingresa un número válido'; // Mensaje si no es un número
                   }
                   return null;
                 },
               ),
-              const SizedBox(height: 12.0),
-              // Fila para mostrar la fecha seleccionada y el botón para cambiarla.
+              const SizedBox(height: 12.0), // Espacio vertical
+              // Fila para mostrar la fecha y un botón para cambiarla
               Row(
                 children: [
-                  Expanded(
+                  Expanded( // Ocupa el espacio disponible
                     child: Text(
-                      'Fecha: ${dateFormat.format(_selectedDate)}', // Muestra la fecha formateada
+                      'Fecha: ${dateFormat.format(_selectedDate)}', // Muestra la fecha seleccionada
                       style: const TextStyle(fontSize: 16.0),
                     ),
                   ),
-                  TextButton(
+                  TextButton( // Botón de texto para abrir el calendario
                     onPressed: () => _selectDate(context), // Llama a la función para seleccionar fecha
                     child: const Text('Seleccionar Fecha'),
                   ),
                 ],
               ),
-              const SizedBox(height: 24.0),
-              // Botón para guardar el gasto.
+              const SizedBox(height: 24.0), // Espacio vertical
+              // Botón para guardar el gasto
               ElevatedButton(
-                onPressed: _saveExpense, // Llama a la función para guardar el gasto
-                child: Text(_isEditing ? 'Guardar Cambios' : 'Agregar Gasto'), // Texto según si edita o agrega
+                onPressed: _saveExpense, // Llama a la función para guardar
+                child: Text(_isEditing ? 'Guardar Cambios' : 'Agregar Gasto'), // Texto del botón cambia
               ),
             ],
           ),

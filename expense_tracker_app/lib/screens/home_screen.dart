@@ -1,50 +1,58 @@
 import 'package:flutter/material.dart';
-import '../models/expense.dart'; // Importa el modelo de gasto
-import '../database/database_helper.dart'; // Importa el helper de base de datos
-import 'add_edit_expense_screen.dart'; // Importa la pantalla para agregar/editar gastos
-import 'package:intl/intl.dart'; // Importa el paquete intl para formatear fecha y moneda
+import '../models/expense.dart'; // Define cómo es un gasto
+import '../database/database_helper.dart'; // Para manejar la base de datos
+import 'add_edit_expense_screen.dart'; // La pantalla para añadir/editar gastos
+import 'package:intl/intl.dart'; // Para dar formato a números y fechas
 
-// Pantalla principal que muestra el resumen de gastos y la lista de transacciones.
+// Esta es la pantalla principal que muestra los gastos y el total
 class HomeScreen extends StatefulWidget {
-  // Usando la sintaxis de super parameter para el key
+  // Constructor básico
   const HomeScreen({super.key});
 
   @override
   _HomeScreenState createState() => _HomeScreenState();
 }
 
+// El estado de la pantalla principal (maneja los datos que se ven)
 class _HomeScreenState extends State<HomeScreen> {
-  List<Expense> _expenses = []; // Lista para almacenar los gastos
-  double _totalExpenses = 0.0; // Variable para el total de gastos
-  final DatabaseHelper _dbHelper = DatabaseHelper(); // Instancia del helper de base de datos
+  // Lista para guardar todos los gastos que se muestran
+  List<Expense> _expenses = [];
+  // La suma total de todos los gastos
+  double _totalExpenses = 0.0;
+  // Una herramienta para hablar con la base de datos
+  final DatabaseHelper _dbHelper = DatabaseHelper();
 
+  // Se ejecuta justo cuando la pantalla aparece por primera vez
   @override
   void initState() {
     super.initState();
-    _loadExpenses(); // Carga los gastos al iniciar la pantalla
+    // Carga los gastos guardados en la base de datos
+    _loadExpenses();
   }
 
-  // Carga los gastos desde la base de datos y actualiza el estado.
+  // Carga los gastos desde la base de datos y actualiza la pantalla
   Future<void> _loadExpenses() async {
+    // Obtiene la lista de gastos de la base de datos
     List<Expense> expenses = await _dbHelper.getExpenses();
 
-    // Verifica si el widget aún está montado antes de llamar a setState
+    // Si la pantalla ya no está visible, no hagas nada más
     if (!mounted) return;
 
+    // Calcula el total sumando todos los montos de los gastos
     double total = 0.0;
     for (var expense in expenses) {
       total += expense.amount;
     }
+    // Actualiza la pantalla con la nueva lista de gastos y el total
     setState(() {
       _expenses = expenses;
       _totalExpenses = total;
     });
   }
 
-  // Navega a la pantalla de agregar/editar gasto.
-  // Si se pasa un gasto, es para editar; si no, es para agregar uno nuevo.
+  // Te lleva a la pantalla para añadir o cambiar un gasto
   void _navigateToAddEditExpense({Expense? expense}) async {
-    // Espera el resultado de la pantalla de agregar/editar.
+    // Espera a que vuelvas de la pantalla de añadir/editar
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
@@ -52,41 +60,43 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
 
-    // Verifica si el widget aún está montado antes de usar el resultado o llamar a funciones que actualizan la UI
+    // Si la pantalla ya no está visible, no hagas nada más
     if (!mounted) return;
 
-    // Si el resultado es true, significa que se guardó o eliminó un gasto,
-    // por lo que recargamos la lista de gastos.
+    // Si volviste y se guardó o borró algo (el resultado es true), recarga los gastos
     if (result == true) {
       _loadExpenses();
     }
   }
 
-  // Muestra un diálogo de confirmación para eliminar un gasto.
+  // Muestra un mensaje emergente para confirmar si quieres borrar un gasto
   void _confirmDeleteExpense(Expense expense) {
     showDialog(
-      context: context, // Es seguro usar context aquí porque showDialog es síncrono
+      context: context, // Muestra el diálogo en esta pantalla
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Confirmar Eliminación'),
-          content: const Text('¿Estás seguro de que quieres eliminar este gasto?'),
+          title: const Text('Confirmar Eliminación'), // Título del diálogo
+          content: const Text('¿Estás seguro de que quieres eliminar este gasto?'), // Mensaje del diálogo
           actions: <Widget>[
             TextButton(
-              child: const Text('Cancelar'),
+              child: const Text('Cancelar'), // Botón para cancelar
               onPressed: () {
                 Navigator.of(context).pop(); // Cierra el diálogo
               },
             ),
             TextButton(
-              child: const Text('Eliminar'),
+              child: const Text('Eliminar'), // Botón para confirmar eliminación
               onPressed: () async {
-                await _dbHelper.deleteExpense(expense.id!); // Elimina el gasto de la base de datos
+                // Borra el gasto de la base de datos
+                await _dbHelper.deleteExpense(expense.id!);
 
-                // Verifica si el widget aún está montado antes de actualizar la UI
+                // Si la pantalla ya no está visible, no hagas nada más
                 if (!mounted) return;
 
-                _loadExpenses(); // Recarga la lista de gastos
-                Navigator.of(context).pop(); // Cierra el diálogo
+                // Recarga la lista de gastos en la pantalla
+                _loadExpenses();
+                // Cierra el diálogo de confirmación
+                Navigator.of(context).pop();
               },
             ),
           ],
@@ -95,40 +105,42 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // Dibuja la interfaz visual de la pantalla
   @override
   Widget build(BuildContext context) {
-    // Formatea el total de gastos a moneda local.
-    // Asegúrate de que 'es_SV' sea el locale correcto para El Salvador o usa uno genérico como 'en_US' si prefieres.
-    final currencyFormat = NumberFormat.currency(locale: 'es_SV', symbol: '\$');
+    // Herramienta para mostrar el total de gastos como moneda
+    final currencyFormat = NumberFormat.currency(locale: 'es_SV', symbol: '\$'); // Formato para El Salvador
 
+    // Scaffold es la estructura base de la pantalla (barra de arriba, cuerpo, etc.)
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Control de Gastos Personales'),
-        centerTitle: true,
+        title: const Text('Control de Gastos Personales'), // Título en la barra de arriba
+        centerTitle: true, // Centra el título
       ),
-      body: Column(
+      body: Column( // Organiza los elementos verticalmente
         children: [
-          // Tarjeta que muestra el resumen de gastos.
+          // Una tarjeta que muestra el resumen del total de gastos
           Card(
-            margin: const EdgeInsets.all(16.0),
+            margin: const EdgeInsets.all(16.0), // Espacio alrededor de la tarjeta
             child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              padding: const EdgeInsets.all(16.0), // Espacio dentro de la tarjeta
+              child: Column( // Elementos dentro de la tarjeta, organizados verticalmente
+                crossAxisAlignment: CrossAxisAlignment.start, // Alinea el texto a la izquierda
                 children: [
                   const Text(
-                    'Total de Gastos:',
+                    'Total de Gastos:', // Etiqueta para el total
                     style: TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold),
                   ),
-                  const SizedBox(height: 8.0),
+                  const SizedBox(height: 8.0), // Espacio vertical
                   Text(
                     currencyFormat.format(_totalExpenses), // Muestra el total formateado
-                    style: const TextStyle(fontSize: 24.0, color: Colors.redAccent, fontWeight: FontWeight.bold),
+                    style: const TextStyle(fontSize: 24.0, color: Colors.redAccent, fontWeight: FontWeight.bold), // Estilo del texto del total
                   ),
                 ],
               ),
             ),
           ),
+          // Un texto que dice 'Transacciones:'
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
             child: Align(
@@ -139,51 +151,52 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
           ),
-          // Lista expandible para mostrar las transacciones.
-          Expanded(
-            child: _expenses.isEmpty
-                ? const Center(child: Text('No hay gastos registrados.')) // Mensaje si no hay gastos
-                : ListView.builder(
-              itemCount: _expenses.length,
-              itemBuilder: (context, index) {
-                final expense = _expenses[index];
-                // Formatea la fecha del gasto.
-                final dateFormat = DateFormat('dd/MM/yyyy'); // DateFormat se usa directamente
+          // La lista que muestra cada gasto individualmente
+          Expanded( // Hace que la lista ocupe todo el espacio restante
+            child: _expenses.isEmpty // Si no hay gastos...
+                ? const Center(child: Text('No hay gastos registrados.')) // Muestra un mensaje
+                : ListView.builder( // Si hay gastos, construye la lista
+              itemCount: _expenses.length, // Cuántos elementos hay en la lista
+              itemBuilder: (context, index) { // Cómo dibujar cada elemento de la lista
+                final expense = _expenses[index]; // El gasto actual en este elemento
+                // Herramienta para mostrar la fecha del gasto
+                final dateFormat = DateFormat('dd/MM/yyyy');
 
+                // Una tarjeta para cada gasto en la lista
                 return Card(
-                  margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
-                  child: ListTile(
-                    leading: CircleAvatar(
-                      backgroundColor: Theme.of(context).primaryColor,
-                      radius: 18.0, // Reducido el radio del CircleAvatar
+                  margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0), // Espacio alrededor de la tarjeta del gasto
+                  child: ListTile( // Un elemento de lista con un icono, título y subtítulo
+                    leading: CircleAvatar( // El círculo a la izquierda con el monto
+                      backgroundColor: Theme.of(context).primaryColor, // Color del círculo
+                      radius: 18.0, // Tamaño del círculo
                       child: Padding(
-                        padding: const EdgeInsets.all(2.0), // Añadido un pequeño padding interno
-                        child: FittedBox( // Envuelve el texto en FittedBox para que se ajuste
+                        padding: const EdgeInsets.all(2.0), // Espacio dentro del círculo
+                        child: FittedBox( // Intenta ajustar el texto dentro del círculo
                           child: Text(
-                            currencyFormat.format(expense.amount), // Muestra el monto en el círculo
-                            style: const TextStyle(color: Colors.white, fontSize: 10.0), // Reducido el tamaño de la fuente
+                            currencyFormat.format(expense.amount), // El monto del gasto formateado
+                            style: const TextStyle(color: Colors.white, fontSize: 10.0), // Estilo del texto del monto
                           ),
                         ),
                       ),
                     ),
-                    title: Text(expense.description), // Descripción del gasto
-                    subtitle: Text('${expense.category} - ${dateFormat.format(expense.date)}'), // Categoría y fecha
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
+                    title: Text(expense.description), // La descripción del gasto
+                    subtitle: Text('${expense.category} - ${dateFormat.format(expense.date)}'), // La categoría y fecha del gasto
+                    trailing: Row( // Elementos a la derecha (botones de editar y borrar)
+                      mainAxisSize: MainAxisSize.min, // Hace que la fila ocupe el mínimo espacio
                       children: [
-                        // Botón para editar el gasto.
+                        // Botón para editar el gasto
                         IconButton(
-                          icon: const Icon(Icons.edit),
+                          icon: const Icon(Icons.edit), // Icono de lápiz
                           onPressed: () {
-                            _navigateToAddEditExpense(expense: expense); // Navega a la pantalla de edición
+                            _navigateToAddEditExpense(expense: expense); // Al tocar, va a la pantalla de edición
                           },
                         ),
-                        // Botón para eliminar el gasto.
+                        // Botón para eliminar el gasto
                         IconButton(
-                          icon: const Icon(Icons.delete),
-                          color: Colors.red,
+                          icon: const Icon(Icons.delete), // Icono de bote de basura
+                          color: Colors.red, // Color rojo para el icono de borrar
                           onPressed: () {
-                            _confirmDeleteExpense(expense); // Muestra el diálogo de confirmación para eliminar
+                            _confirmDeleteExpense(expense); // Al tocar, muestra el diálogo de confirmación
                           },
                         ),
                       ],
@@ -195,13 +208,13 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      // Botón flotante para agregar un nuevo gasto.
+      // Un botón que flota en la esquina para añadir un nuevo gasto
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          _navigateToAddEditExpense(); // Navega a la pantalla para agregar un nuevo gasto
+          _navigateToAddEditExpense(); // Al tocar, va a la pantalla para añadir un nuevo gasto
         },
-        tooltip: 'Agregar Gasto',
-        child: const Icon(Icons.add),
+        tooltip: 'Agregar Gasto', // Texto que aparece al mantener presionado el botón
+        child: const Icon(Icons.add), // Icono de '+' en el botón
       ),
     );
   }

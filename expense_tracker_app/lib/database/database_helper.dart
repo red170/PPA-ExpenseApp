@@ -1,98 +1,100 @@
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
-import '../models/expense.dart'; // Importa el modelo de gasto
+import '../models/expense.dart'; // Define cómo se guarda un gasto
 
-// Clase para manejar las operaciones de la base de datos.
+// Esta clase ayuda a guardar, leer, actualizar y borrar los gastos en la base de datos
 class DatabaseHelper {
+  // Crea una única instancia de esta clase (para no tener varias conexiones a la base de datos)
   static final DatabaseHelper _instance = DatabaseHelper._internal();
+  // Una variable para guardar la conexión a la base de datos
   static Database? _database;
 
-  // Constructor interno privado para el singleton.
+  // Constructor privado para asegurar que solo se cree una instancia
   DatabaseHelper._internal();
 
-  // Factory constructor para obtener la única instancia de la clase.
+  // Permite obtener la única instancia de esta clase desde cualquier parte
   factory DatabaseHelper() {
     return _instance;
   }
 
-  // Getter para la instancia de la base de datos. Si no existe, la inicializa.
+  // Obtiene la base de datos. Si no está abierta, la abre primero.
   Future<Database> get database async {
     if (_database != null) {
-      return _database!;
+      return _database!; // Si ya está abierta, la devuelve
     }
-    _database = await _initDatabase();
+    _database = await _initDatabase(); // Si no, la inicializa
     return _database!;
   }
 
-  // Inicializa la base de datos.
+  // Configura y abre la base de datos en el teléfono
   Future<Database> _initDatabase() async {
-    // Obtiene la ruta del directorio de documentos de la aplicación.
+    // Encuentra dónde se pueden guardar bases de datos en el teléfono
     String documentsPath = await getDatabasesPath();
-    // Une la ruta del directorio con el nombre de la base de datos.
+    // Crea la ruta completa al archivo de la base de datos
     String path = join(documentsPath, 'expenses.db');
 
-    // Abre la base de datos. Si no existe, onCreate se llama para crearla.
+    // Abre el archivo de la base de datos. Si no existe, llama a _onCreate para crearla.
     return await openDatabase(
       path,
-      version: 1, // Versión de la base de datos
-      onCreate: _onCreate, // Función para crear la base de datos si no existe
+      version: 1, // La versión de la base de datos
+      onCreate: _onCreate, // Función para crear las tablas la primera vez
     );
   }
 
-  // Crea la tabla de gastos en la base de datos.
+  // Crea la tabla 'expenses' (gastos) en la base de datos
   Future<void> _onCreate(Database db, int version) async {
     await db.execute(
       '''
       CREATE TABLE expenses(
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        description TEXT,
-        category TEXT,
-        amount REAL,
-        date TEXT
+        id INTEGER PRIMARY KEY AUTOINCREMENT, -- Un número único para cada gasto
+        description TEXT, -- La descripción del gasto (texto)
+        category TEXT, -- La categoría del gasto (texto)
+        amount REAL, -- El monto del gasto (número con decimales)
+        date TEXT -- La fecha del gasto (guardada como texto)
       )
       ''',
     );
   }
 
-  // Inserta un nuevo gasto en la base de datos.
+  // Guarda un nuevo gasto en la base de datos
   Future<int> insertExpense(Expense expense) async {
     Database db = await database;
-    // Inserta el gasto como un Map. conflictAlgorithm reemplaza si hay conflicto de ID.
+    // Inserta el gasto. Si ya existe uno con el mismo ID, lo reemplaza.
     return await db.insert('expenses', expense.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
-  // Recupera todos los gastos de la base de datos.
+  // Obtiene todos los gastos guardados en la base de datos
   Future<List<Expense>> getExpenses() async {
     Database db = await database;
-    // Consulta todos los registros de la tabla 'expenses'.
-    List<Map<String, dynamic>> maps = await db.query('expenses', orderBy: 'date DESC'); // Ordena por fecha descendente
+    // Pide todos los gastos de la tabla 'expenses', ordenados por fecha (del más nuevo al más viejo)
+    List<Map<String, dynamic>> maps = await db.query('expenses', orderBy: 'date DESC');
 
-    // Convierte la lista de Maps a una lista de objetos Expense.
+    // Convierte los resultados de la base de datos a una lista de objetos Expense
     return List.generate(maps.length, (i) {
       return Expense.fromMap(maps[i]);
     });
   }
 
-  // Actualiza un gasto existente en la base de datos.
+  // Actualiza la información de un gasto que ya existe
   Future<int> updateExpense(Expense expense) async {
     Database db = await database;
-    // Actualiza el gasto donde el ID coincide.
+    // Busca el gasto por su ID y actualiza sus datos
     return await db.update(
       'expenses',
       expense.toMap(),
-      where: 'id = ?', // Cláusula WHERE para identificar el gasto a actualizar
-      whereArgs: [expense.id], // Argumentos para la cláusula WHERE
+      where: 'id = ?', // Busca el gasto con este ID
+      whereArgs: [expense.id], // El valor del ID a buscar
     );
   }
 
-  // Elimina un gasto de la base de datos.
+  // Borra un gasto de la base de datos usando su ID
   Future<int> deleteExpense(int id) async {
     Database db = await database;
-    // Elimina el gasto donde el ID coincide.
+    // Borra el gasto con el ID especificado
     return await db.delete(
       'expenses',
-      where: 'id = ?', // Cláusula WHERE para identificar el gasto a eliminar
-      whereArgs: [id], // Argumentos para la cláusula WHERE
+      where: 'id = ?', // Busca el gasto con este ID
+      whereArgs: [id], // El valor del ID a borrar
     );
   }
 }

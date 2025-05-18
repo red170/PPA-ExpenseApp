@@ -1,43 +1,45 @@
 import 'package:flutter/material.dart';
-import 'screens/home_screen.dart'; // Importa la pantalla de inicio
+import 'screens/home_screen.dart'; // Importa la pantalla principal de la aplicación
 
-// Importaciones necesarias para la inicialización de la base de datos
+// Importaciones para configurar la base de datos en diferentes sistemas
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
-import 'package:sqflite/sqflite.dart';
-import 'dart:io'; // Necesario para Platform
+import 'dart:io'; // Permite identificar el sistema operativo
 
+// La función principal donde empieza la ejecución de la aplicación
 void main() {
-  // Asegura que los bindings de Flutter estén inicializados.
+  // Asegura que Flutter esté listo antes de inicializar cosas importantes
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Inicializa la fábrica de base de datos según la plataforma.
-  // Esto es crucial para que sqflite funcione correctamente en diferentes entornos,
-  // especialmente en escritorio o ciertos emuladores/configuraciones de prueba.
+  // Verifica si la aplicación se ejecuta en una computadora (Windows, Linux, macOS)
+  // Si es así, configura la base de datos de una manera especial para que funcione
   if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
-    // Usa la fábrica FFI (Foreign Function Interface) para plataformas de escritorio.
+    // Inicializa la configuración específica para bases de datos en computadoras
     sqfliteFfiInit();
+    // Establece cómo se crearán y abrirán las bases de datos en este entorno
     databaseFactory = databaseFactoryFfi;
   }
 
-  runApp(const MyApp()); // Ejecuta la aplicación
+  // Ejecuta la aplicación principal (el widget MyApp)
+  runApp(const MyApp());
 }
 
-// Widget principal de la aplicación.
+// El widget principal que define la estructura base de la aplicación
 class MyApp extends StatelessWidget {
-  // Usando la sintaxis de super parameter para el key
+  // Constructor del widget, usa la clave estándar de Flutter
   const MyApp({super.key});
 
+  // Este método construye la interfaz visual de la aplicación
   @override
   Widget build(BuildContext context) {
+    // MaterialApp configura la apariencia general de la app al estilo Material Design de Android
     return MaterialApp(
-      title: 'Control de Gastos', // Título de la aplicación
+      title: 'Control de Gastos', // El título que aparece en la barra de tareas del sistema
       theme: ThemeData(
-        primarySwatch: Colors.blue, // Tema de color principal
-        visualDensity: VisualDensity.adaptivePlatformDensity,
+        primarySwatch: Colors.blue, // Define el color principal de la aplicación
+        visualDensity: VisualDensity.adaptivePlatformDensity, // Ajusta la densidad visual según la plataforma
       ),
-      home: const HomeScreen(), // La pantalla de inicio es la primera que se muestra
-      debugShowCheckedModeBanner: false, // Oculta el banner de debug
+      home: const HomeScreen(), // La pantalla que se muestra primero al abrir la app
+      debugShowCheckedModeBanner: false, // Oculta una etiqueta de "Debug" en la esquina
     );
   }
 }
-
