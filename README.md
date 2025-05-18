@@ -1,6 +1,39 @@
-Gestor de Gastos 170Aplicación móvil simple para llevar un control de gastos personales, desarrollada como parte de la asignatura Desarrollo de Aplicaciones Móviles DAM-21.Descripción"Gestor de Gastos 170" es una aplicación móvil intuitiva diseñada para ayudar a los usuarios a registrar y gestionar sus gastos diarios. Permite añadir nuevas transacciones, categorizarlas, especificar el monto y la fecha, y ofrece la posibilidad de editar o eliminar entradas existentes. La aplicación muestra un resumen del total de gastos, proporcionando una vista rápida de tu situación financiera. Todos los datos se almacenan de forma segura y localmente en el dispositivo del usuario.CaracterísticasRegistro de Gastos: Añade fácilmente nuevos gastos con descripción, categoría, monto y fecha.Listado de Transacciones: Visualiza un historial de todos tus gastos registrados.Resumen Total: Consulta el monto total acumulado de tus gastos.Edición de Gastos: Modifica los detalles de cualquier gasto previamente registrado.Eliminación de Gastos: Borra transacciones que ya no necesitas.Almacenamiento Local: Tus datos se guardan directamente en tu dispositivo utilizando una base de datos SQLite, sin necesidad de conexión a internet constante.Interfaz Sencilla: Diseño limpio y fácil de usar.Tecnologías UtilizadasFlutter: Framework de UI de Google para construir aplicaciones compiladas de forma nativa para móvil, web y escritorio desde una única base de código.Dart: Lenguaje de programación optimizado para clientes, desarrollado por Google.sqflite: Plugin de Flutter para acceder y manipular bases de datos SQLite en iOS y Android.path_provider: Plugin de Flutter para encontrar ubicaciones comunes en el sistema de archivos (necesario para la base de datos).intl: Paquete de Dart para internacionalización y localización, utilizado aquí para formatear fechas y moneda.Configuración del ProyectoPara ejecutar este proyecto localmente, asegúrate de tener instalado:Flutter SDK: Sigue las instrucciones de instalación en la documentación oficial de Flutter.Android Studio (o VS Code con plugins de Flutter/Dart): Necesario para el desarrollo y para obtener el SDK de Android y herramientas relacionadas.Componentes de Visual Studio (en Windows): Asegúrate de tener instalada la carga de trabajo "Desarrollo para escritorio con C++" si usas Windows, como se indica en flutter doctor.Una vez que tengas el entorno configurado, clona este repositorio:git clone https://github.com/dolthub/dolt
-cd expense_tracker_app
-Descarga las dependencias:flutter pub get
-Ejecutar la AplicaciónConecta un dispositivo Android o inicia un emulador. Luego, ejecuta la aplicación desde tu IDE o usando el comando:flutter run
-Generar el APKPara generar el archivo APK instalable para Android, ejecuta el siguiente comando en la raíz del proyecto:flutter build apk --release
-El archivo APK se encontrará en build/app/outputs/apk/release/app-release.apk.Personalización (Nombre e Icono)Nombre de la Aplicación: El nombre "Gestor de Gastos 170" se configura en el archivo android/app/src/main/AndroidManifest.xml modificando el atributo android:label dentro de la etiqueta <application>.Icono de la Aplicación: Los archivos de icono se encuentran en las carpetas android/app/src/main/res/mipmap-.... Debes reemplazar los archivos ic_launcher.png (y ic_launcher_round.png si usas íconos redondos) en cada carpeta de densidad con tus propios archivos de icono en las resoluciones correspondientes.Desarrollado por: [Tu Nombre o Nombres del Grupo]Asignatura: Desarrollo de Aplicaciones Móviles DAM-21Tutor: José Ricardo ReyesFecha: Mayo 2025
+# Gestor de Gastos 170
+
+Aplicación móvil simple para llevar un control de gastos personales, desarrollada como parte de la asignatura Desarrollo de Aplicaciones Móviles DAM-21.
+
+## Descripción
+
+"Gestor de Gastos 170" es una aplicación móvil intuitiva diseñada para ayudar a los usuarios a registrar y gestionar sus gastos diarios. Permite añadir nuevas transacciones, categorizarlas, especificar el monto y la fecha, y ofrece la posibilidad de editar o eliminar entradas existentes. La aplicación muestra un resumen del total de gastos, proporcionando una vista rápida de tu situación financiera. Todos los datos se almacenan de forma segura y localmente en el dispositivo del usuario.
+
+## Características
+
+* **Registro de Gastos:** Añade fácilmente nuevos gastos con descripción, categoría, monto y fecha.
+
+* **Listado de Transacciones:** Visualiza un historial de todos tus gastos registrados.
+
+* **Resumen Total:** Consulta el monto total acumulado de tus gastos.
+
+* **Edición de Gastos:** Modifica los detalles de cualquier gasto previamente registrado.
+
+* **Eliminación de Gastos:** Borra transacciones que ya no necesitas.
+
+* **Almacenamiento Local:** Tus datos se guardan directamente en tu dispositivo utilizando una base de datos SQLite, sin necesidad de conexión a internet constante.
+
+* **Interfaz Sencilla:** Diseño limpio y fácil de usar.
+
+## Tecnologías Utilizadas
+
+* **Flutter:** Framework de UI de Google para construir aplicaciones compiladas de forma nativa para móvil, web y escritorio desde una única base de código.
+
+* **Dart:** Lenguaje de programación optimizado para clientes, desarrollado por Google.
+
+* **sqflite:** Plugin de Flutter para acceder y manipular bases de datos SQLite en iOS y Android.
+
+* **path_provider:** Plugin de Flutter para encontrar ubicaciones comunes en el sistema de archivos (necesario para la base de datos).
+
+* **intl:** Paquete de Dart para internacionalización y localización, utilizado aquí para formatear fechas y moneda.
+
+## Configuración del Proyecto
+
+Para ejecutar este proyecto localmente, asegúrate de tener instalado:
