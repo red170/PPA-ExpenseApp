@@ -37,3 +37,15 @@ Aplicación móvil simple para llevar un control de gastos personales, desarroll
 ## Configuración del Proyecto
 
 Para ejecutar este proyecto localmente, asegúrate de tener instalado:
+
+1.  **Flutter SDK:** Sigue las instrucciones de instalación en la [documentación oficial de Flutter](https://flutter.dev/docs/get-started/install).
+
+2.  **Android Studio (o VS Code con plugins de Flutter/Dart):** Necesario para el desarrollo y para obtener el SDK de Android y herramientas relacionadas.
+
+3.  **Componentes de Visual Studio (en Windows):** Asegúrate de tener instalada la carga de trabajo "Desarrollo para escritorio con C++" si usas Windows, como se indica en `flutter doctor`.
+
+Una vez que tengas el entorno configurado, clona este repositorio:
+
+```bash
+git clone [https://github.com/dolthub/dolt](https://github.com/dolthub/dolt)
+cd expense_tracker_app
