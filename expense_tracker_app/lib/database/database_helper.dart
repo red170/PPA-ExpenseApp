@@ -64,10 +64,40 @@ class DatabaseHelper {
   }
 
   // Obtiene todos los gastos guardados en la base de datos
-  Future<List<Expense>> getExpenses() async {
+  // Ahora acepta parámetros opcionales para filtrar por categoría y ordenar
+  Future<List<Expense>> getExpenses({String? categoryFilter, String? orderBy}) async {
     Database db = await database;
-    // Pide todos los gastos de la tabla 'expenses', ordenados por fecha (del más nuevo al más viejo)
-    List<Map<String, dynamic>> maps = await db.query('expenses', orderBy: 'date DESC');
+
+    // Construye la cláusula WHERE si se proporciona un filtro de categoría
+    String? whereClause;
+    List<dynamic>? whereArgs;
+    if (categoryFilter != null && categoryFilter != 'Todas') { // 'Todas' es una opción para no filtrar
+      whereClause = 'category = ?';
+      whereArgs = [categoryFilter];
+    }
+
+    // Define el ordenamiento por defecto si no se especifica uno
+    String? order;
+    if (orderBy == 'Monto Asc') {
+      order = 'amount ASC';
+    } else if (orderBy == 'Monto Desc') {
+      order = 'amount DESC';
+    } else if (orderBy == 'Descripción Asc') {
+      order = 'description ASC';
+    } else if (orderBy == 'Descripción Desc') {
+      order = 'description DESC';
+    } else { // Ordenar por fecha descendente por defecto o si se elige 'Fecha Desc'
+      order = 'date DESC';
+    }
+
+
+    // Consulta todos los registros de la tabla 'expenses' con filtro y ordenamiento opcionales.
+    List<Map<String, dynamic>> maps = await db.query(
+        'expenses',
+        where: whereClause,
+        whereArgs: whereArgs,
+        orderBy: order // Aplica el ordenamiento
+    );
 
     // Convierte los resultados de la base de datos a una lista de objetos Expense
     return List.generate(maps.length, (i) {

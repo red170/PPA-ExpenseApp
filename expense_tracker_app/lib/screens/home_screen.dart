@@ -1,9 +1,11 @@
-
 import 'package:flutter/material.dart';
 import '../models/expense.dart'; // Define cómo es un gasto
 import '../database/database_helper.dart'; // Para manejar la base de datos
 import 'add_edit_expense_screen.dart'; // La pantalla para añadir/editar gastos
 import 'package:intl/intl.dart'; // Para dar formato a números y fechas
+// La importación de add_edit_expense_screen.dart ya está arriba, no necesitas duplicarla.
+// import 'add_edit_expense_screen.dart'; // Importa la pantalla para acceder a la lista de categorías
+
 
 // Esta es la pantalla principal que muestra los gastos y el total
 class HomeScreen extends StatefulWidget {
@@ -26,31 +28,58 @@ class _HomeScreenState extends State<HomeScreen> {
   // Una herramienta para hablar con la base de datos
   final DatabaseHelper _dbHelper = DatabaseHelper();
 
+  // Variables para controlar el filtro y el ordenamiento
+  String? _selectedCategoryFilter; // Categoría seleccionada para filtrar
+  String _selectedOrder = 'Fecha Desc'; // Criterio de ordenamiento seleccionado
+
+  // Opciones para el filtro de categoría (incluye 'Todas')
+  // Ahora usa la lista 'categories' pública importada de AddEditExpenseScreen
+  List<String> _categoryFilterOptions = ['Todas', ...categories]; // Usa la lista 'categories'
+
+  // Opciones para el ordenamiento
+  final List<String> _orderByOptions = [
+    'Fecha Desc',
+    'Fecha Asc',
+    'Monto Desc',
+    'Monto Asc',
+    'Descripción Asc',
+    'Descripción Desc',
+  ];
+
+
   // Se ejecuta justo cuando la pantalla aparece por primera vez
   @override
   void initState() {
     super.initState();
-    // Carga los gastos guardados en la base de datos
+    // Inicializa el filtro de categoría con 'Todas'
+    _selectedCategoryFilter = _categoryFilterOptions.first;
+    // Carga los gastos guardados en la base de datos con el filtro y ordenamiento iniciales
     _loadExpenses();
   }
 
-  // Carga los gastos desde la base de datos y actualiza la pantalla
+  // Carga los gastos desde la base de datos aplicando el filtro y ordenamiento actuales
   Future<void> _loadExpenses() async {
-    // Obtiene la lista de gastos de la base de datos
-    List<Expense> expenses = await _dbHelper.getExpenses();
+    // Obtiene la lista de gastos de la base de datos, aplicando el filtro y ordenamiento
+    List<Expense> expenses = await _dbHelper.getExpenses(
+      categoryFilter: _selectedCategoryFilter,
+      orderBy: _selectedOrder,
+    );
 
     // Si la pantalla ya no está visible, no hagas nada más
     if (!mounted) return;
 
     // Calcula el total sumando todos los montos de los gastos
     double total = 0.0;
+    // Calcula el total solo de los gastos que se están mostrando (después del filtro)
     for (var expense in expenses) {
       total += expense.amount;
     }
+
+
     // Actualiza la pantalla con la nueva lista de gastos y el total
     setState(() {
       _expenses = expenses;
-      _totalExpenses = total;
+      _totalExpenses = total; // Ahora el total refleja solo los gastos filtrados
     });
   }
 
@@ -69,7 +98,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     // Si volviste y se guardó o borró algo (el resultado es true), recarga los gastos
     if (result == true) {
-      _loadExpenses();
+      _loadExpenses(); // Recarga los gastos con el filtro y ordenamiento actuales
     }
   }
 
@@ -98,7 +127,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 if (!mounted) return;
 
                 // Recarga la lista de gastos en la pantalla
-                _loadExpenses();
+                _loadExpenses(); // Recarga los gastos con el filtro y ordenamiento actuales
                 // Cierra el diálogo de confirmación
                 Navigator.of(context).pop();
               },
@@ -156,6 +185,54 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
           ),
+          // Fila para los controles de filtro y ordenamiento
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween, // Espacia los elementos
+              children: [
+                // Dropdown para filtrar por categoría
+                Expanded( // Permite que el dropdown ocupe espacio
+                  child: DropdownButton<String>(
+                    hint: const Text('Filtrar por Categoría'),
+                    value: _selectedCategoryFilter,
+                    items: _categoryFilterOptions.map((String category) {
+                      return DropdownMenuItem<String>(
+                        value: category,
+                        child: Text(category),
+                      );
+                    }).toList(),
+                    onChanged: (String? newValue) {
+                      setState(() {
+                        _selectedCategoryFilter = newValue; // Actualiza el filtro seleccionado
+                      });
+                      _loadExpenses(); // Recarga los gastos con el nuevo filtro
+                    },
+                  ),
+                ),
+                const SizedBox(width: 16.0), // Espacio entre dropdowns
+                // Dropdown para ordenar
+                Expanded( // Permite que el dropdown ocupe espacio
+                  child: DropdownButton<String>(
+                    hint: const Text('Ordenar por'),
+                    value: _selectedOrder,
+                    items: _orderByOptions.map((String order) {
+                      return DropdownMenuItem<String>(
+                        value: order,
+                        child: Text(order),
+                      );
+                    }).toList(),
+                    onChanged: (String? newValue) {
+                      setState(() {
+                        _selectedOrder = newValue!; // Actualiza el orden seleccionado
+                      });
+                      _loadExpenses(); // Recarga los gastos con el nuevo orden
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
             child: Align(
@@ -183,8 +260,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
                   child: ListTile( // Un elemento de lista con un icono, título y subtítulo
                     leading: Container( // El contenedor para el monto
-                      width: 60.0, // Ancho del rectángulo (aumentado)
-                      height: 40.0, // Alto del rectángulo (ajustado ligeramente)
+                      width: 60.0, // Ancho del rectángulo
+                      height: 40.0, // Alto del rectángulo
                       decoration: BoxDecoration(
                         color: Theme.of(context).primaryColor, // Color de fondo (se adapta al tema)
                         borderRadius: BorderRadius.circular(8.0), // Bordes redondeados
@@ -227,7 +304,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
       // Un botón que flota en la esquina para añadir un nuevo gasto
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: FloatingActionButton( // CORREGIDO: FloatingActionButton
         onPressed: () {
           _navigateToAddEditExpense(); // Al tocar, va a la pantalla para añadir un nuevo gasto
         },

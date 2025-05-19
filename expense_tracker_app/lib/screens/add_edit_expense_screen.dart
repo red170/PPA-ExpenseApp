@@ -1,7 +1,22 @@
 import 'package:flutter/material.dart';
-import '../models/expense.dart'; // Importa cómo se define un gasto
-import '../database/database_helper.dart'; // Importa las funciones para guardar y leer gastos
+import '../models/expense.dart'; // Define cómo se guarda un gasto
+import '../database/database_helper.dart'; // Para manejar la base de datos
 import 'package:intl/intl.dart'; // Para dar formato a la fecha
+
+// Lista de categorías predefinidas
+// Puedes añadir o modificar estas categorías según necesites
+const List<String> categories = [
+  'Comida',
+  'Transporte',
+  'Entretenimiento',
+  'Hogar',
+  'Compras',
+  'Salud',
+  'Educación',
+  'Viajes',
+  'Otros',
+];
+
 
 // Pantalla para añadir un gasto nuevo o cambiar uno que ya existe
 class AddEditExpenseScreen extends StatefulWidget {
@@ -21,8 +36,9 @@ class _AddEditExpenseScreenState extends State<AddEditExpenseScreen> {
   final _formKey = GlobalKey<FormState>();
   // Controladores para obtener el texto de los campos de entrada
   final TextEditingController _descriptionController = TextEditingController();
-  final TextEditingController _categoryController = TextEditingController();
   final TextEditingController _amountController = TextEditingController();
+  // Variable para guardar la categoría seleccionada
+  String? _selectedCategory; // Ahora es String? y puede ser nulo inicialmente
   // La fecha seleccionada para el gasto, por defecto es hoy
   DateTime _selectedDate = DateTime.now();
   // Una herramienta para interactuar con la base de datos
@@ -35,21 +51,28 @@ class _AddEditExpenseScreenState extends State<AddEditExpenseScreen> {
   @override
   void initState() {
     super.initState();
-    // Si estamos editando, llena los campos del formulario con los datos del gasto
+    // Si estamos editando, llena los campos del formulario con los datos del gasto.
+    // También selecciona la categoría si existe en la lista predefinida.
     if (_isEditing) {
       _descriptionController.text = widget.expense!.description;
-      _categoryController.text = widget.expense!.category;
+      // Asegura que la categoría del gasto exista en la lista predefinida, si no, usa nulo.
+      _selectedCategory = categories.contains(widget.expense!.category)
+          ? widget.expense!.category
+          : null; // Si la categoría guardada no está en la lista, no se selecciona ninguna
       _amountController.text = widget.expense!.amount.toString();
       _selectedDate = widget.expense!.date;
+    } else {
+      // Si es un gasto nuevo, selecciona la primera categoría por defecto si la lista no está vacía.
+      if (categories.isNotEmpty) {
+        _selectedCategory = categories.first;
+      }
     }
   }
 
-  // Se ejecuta cuando la pantalla ya no se usa
   @override
   void dispose() {
     // Limpia los controladores de texto para liberar memoria
     _descriptionController.dispose();
-    _categoryController.dispose();
     _amountController.dispose();
     super.dispose();
   }
@@ -72,27 +95,30 @@ class _AddEditExpenseScreenState extends State<AddEditExpenseScreen> {
 
   // Guarda la información del gasto en la base de datos
   Future<void> _saveExpense() async {
-    // Si todos los campos del formulario son válidos
-    if (_formKey.currentState!.validate()) {
+    // Valida el formulario y asegura que se haya seleccionado una categoría
+    if (_formKey.currentState!.validate() && _selectedCategory != null) {
       // Crea un objeto Expense con la información de los campos
       final newExpense = Expense(
         id: _isEditing ? widget.expense!.id : null, // Mantiene el ID si edita, si no, es nuevo
         description: _descriptionController.text,
-        category: _categoryController.text,
+        category: _selectedCategory!, // Usa la categoría seleccionada del Dropdown
         amount: double.parse(_amountController.text), // Convierte el texto del monto a número
-        date: _selectedDate,
+        date: _selectedDate, // Usa la fecha seleccionada
       );
 
-      // Si estamos editando, actualiza el gasto en la base de datos
       if (_isEditing) {
-        await _dbHelper.updateExpense(newExpense);
+        await _dbHelper.updateExpense(newExpense); // Si estamos editando, actualiza
       } else {
-        // Si es un gasto nuevo, lo inserta en la base de datos
-        await _dbHelper.insertExpense(newExpense);
+        await _dbHelper.insertExpense(newExpense); // Si es nuevo, inserta
       }
 
       // Cierra esta pantalla y regresa a la anterior, indicando que algo cambió (true)
       Navigator.pop(context, true);
+    } else if (_selectedCategory == null) {
+      // Muestra un mensaje si no se ha seleccionado una categoría
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Por favor selecciona una categoría')),
+      );
     }
   }
 
@@ -126,13 +152,24 @@ class _AddEditExpenseScreenState extends State<AddEditExpenseScreen> {
                 },
               ),
               const SizedBox(height: 12.0), // Espacio vertical
-              // Campo para escribir la categoría del gasto
-              TextFormField(
-                controller: _categoryController,
+              // Campo para seleccionar la categoría (Dropdown)
+              DropdownButtonFormField<String>(
                 decoration: const InputDecoration(labelText: 'Categoría'),
+                value: _selectedCategory, // El valor seleccionado actualmente
+                items: categories.map((String category) {
+                  return DropdownMenuItem<String>(
+                    value: category,
+                    child: Text(category),
+                  );
+                }).toList(),
+                onChanged: (String? newValue) {
+                  setState(() {
+                    _selectedCategory = newValue; // Actualiza la categoría seleccionada
+                  });
+                },
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Por favor ingresa una categoría';
+                    return 'Por favor selecciona una categoría'; // Validación: debe seleccionar una categoría
                   }
                   return null;
                 },
