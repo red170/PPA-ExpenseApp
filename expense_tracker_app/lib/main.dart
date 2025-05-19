@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'screens/home_screen.dart'; // Carga la pantalla principal de la app
 
+// Importaciones para configurar la base de datos en diferentes sistemas
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'dart:io'; // Para saber en qué sistema operativo estamos
 
+// Importación para guardar y cargar preferencias localmente
+import 'package:shared_preferences/shared_preferences.dart';
+
 // Aquí comienza la app
-void main() {
-  // Asegura que Flutter esté listo
+void main() async { // main ahora es async porque necesitamos esperar al cargar preferencias
+  // Asegura que los bindings de Flutter estén inicializados.
   WidgetsFlutterBinding.ensureInitialized();
 
   // Si la app corre en una computadora (no en un teléfono),
@@ -17,11 +21,11 @@ void main() {
   }
 
   // Inicia la app mostrando el widget MyApp
-  runApp(MyApp()); // Ahora MyApp es un StatefulWidget, no necesita 'const' aquí
+  runApp(MyApp()); // MyApp sigue siendo un StatefulWidget
 }
 
 // El widget principal que define la estructura base de la aplicación
-// Ahora es un StatefulWidget para poder cambiar el tema
+// Es un StatefulWidget para poder cambiar el tema y guardarlo
 class MyApp extends StatefulWidget {
   // Constructor básico
   const MyApp({super.key});
@@ -32,15 +36,43 @@ class MyApp extends StatefulWidget {
 
 // El estado de la aplicación principal, maneja si está en modo oscuro o no
 class _MyAppState extends State<MyApp> {
-  // Variable para saber si el modo oscuro está activado. Empieza en falso (modo claro).
+  // Variable para saber si el modo oscuro está activado.
+  // Inicialmente es falso, pero se cargará la preferencia guardada.
   bool _isDarkMode = false;
 
-  // Función para cambiar entre modo claro y oscuro
-  void _toggleTheme() {
+  // Se llama cuando el widget se crea. Aquí cargaremos la preferencia guardada.
+  @override
+  void initState() {
+    super.initState();
+    _loadThemePreference(); // Llama a la función para cargar la preferencia al iniciar
+  }
+
+  // Carga la preferencia de tema guardada localmente
+  Future<void> _loadThemePreference() async {
+    // Obtiene una instancia de SharedPreferences
+    final prefs = await SharedPreferences.getInstance();
+    // Lee el valor booleano guardado con la clave 'isDarkMode'.
+    // Si no hay nada guardado, usa falso como valor por defecto.
+    final isDarkMode = prefs.getBool('isDarkMode') ?? false;
+
+    // Actualiza el estado de la aplicación con la preferencia cargada
+    setState(() {
+      _isDarkMode = isDarkMode;
+    });
+  }
+
+  // Función para cambiar entre modo claro y oscuro y guardar la preferencia
+  void _toggleTheme() async {
+    // Obtiene una instancia de SharedPreferences
+    final prefs = await SharedPreferences.getInstance();
+
     // Actualiza el estado y redibuja la interfaz
     setState(() {
       _isDarkMode = !_isDarkMode; // Cambia al estado opuesto
     });
+
+    // Guarda el nuevo estado del modo oscuro localmente
+    prefs.setBool('isDarkMode', _isDarkMode);
   }
 
   // Dibuja la interfaz de la app

@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import '../models/expense.dart'; // Define cómo es un gasto
 import '../database/database_helper.dart'; // Para manejar la base de datos
@@ -125,7 +126,7 @@ class _HomeScreenState extends State<HomeScreen> {
             // Icono cambia dependiendo del brillo actual del tema
             icon: Icon(Theme.of(context).brightness == Brightness.dark
                 ? Icons.lightbulb_outline // Icono de bombilla si está en modo oscuro
-                : Icons.dark_mode), // Icono de luna si está en modo claro (CORREGIDO)
+                : Icons.dark_mode), // Icono de luna si está en modo claro
             tooltip: 'Cambiar Tema', // Texto que aparece al mantener presionado
             onPressed: widget.toggleTheme, // Llama a la función para cambiar el tema recibida de MyApp
           ),
@@ -155,7 +156,6 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
           ),
-          // Un texto que dice 'Transacciones:'
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
             child: Align(
@@ -179,18 +179,21 @@ class _HomeScreenState extends State<HomeScreen> {
 
                 // Una tarjeta para cada gasto en la lista
                 return Card(
-                  margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0), // Espacio alrededor de la tarjeta del gasto
+                  // Aumentado el espacio vertical y horizontal alrededor de cada tarjeta de gasto
+                  margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
                   child: ListTile( // Un elemento de lista con un icono, título y subtítulo
-                    leading: CircleAvatar( // El círculo a la izquierda con el monto
-                      backgroundColor: Theme.of(context).primaryColor, // Color del círculo (se adapta al tema)
-                      radius: 18.0, // Tamaño del círculo
-                      child: Padding(
-                        padding: const EdgeInsets.all(2.0), // Espacio dentro del círculo
-                        child: FittedBox( // Intenta ajustar el texto dentro del círculo
-                          child: Text(
-                            currencyFormat.format(expense.amount), // El monto del gasto formateado
-                            style: const TextStyle(color: Colors.white, fontSize: 10.0), // Estilo del texto del monto
-                          ),
+                    leading: Container( // El contenedor para el monto
+                      width: 60.0, // Ancho del rectángulo (aumentado)
+                      height: 40.0, // Alto del rectángulo (ajustado ligeramente)
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).primaryColor, // Color de fondo (se adapta al tema)
+                        borderRadius: BorderRadius.circular(8.0), // Bordes redondeados
+                      ),
+                      padding: const EdgeInsets.all(4.0), // Espacio dentro del contenedor
+                      child: FittedBox( // Intenta ajustar el texto dentro del contenedor
+                        child: Text(
+                          currencyFormat.format(expense.amount), // El monto del gasto formateado
+                          style: const TextStyle(color: Colors.white, fontSize: 14.0), // Tamaño de fuente aumentado
                         ),
                       ),
                     ),
