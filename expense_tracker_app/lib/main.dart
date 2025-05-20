@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'screens/home_screen.dart'; // Carga la pantalla principal de la app
+import 'package:flutter_localizations/flutter_localizations.dart';
+
 
 // Importaciones para configurar la base de datos en diferentes sistemas
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
@@ -104,6 +106,17 @@ class _MyAppState extends State<MyApp> {
       // La pantalla inicial, le pasamos la función para cambiar el tema
       home: HomeScreen(toggleTheme: _toggleTheme),
       debugShowCheckedModeBanner: false, // Oculta una etiqueta de prueba
+
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [
+        Locale('en', ''), // Inglés
+        Locale('es', ''), // Español
+        Locale('es', 'SV'), // Español de El Salvador (opcional, si quieres más específico)
+      ],
     );
   }
 }
