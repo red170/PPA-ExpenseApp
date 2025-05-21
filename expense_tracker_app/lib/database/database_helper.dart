@@ -71,17 +71,19 @@ class DatabaseHelper {
 
   // Actualiza la base de datos si la versión cambia (para añadir nuevas tablas, etc.)
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    // Si la versión anterior es 1 y la nueva es 2, significa que estamos añadiendo la tabla 'budgets'
     if (oldVersion < 2) {
       await db.execute(
         '''
-      CREATE TABLE budgets(
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        category TEXT UNIQUE,
-        amount REAL
-      )
-      ''',
+        CREATE TABLE budgets(
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          category TEXT UNIQUE,
+          amount REAL
+        )
+        ''',
       );
     }
+    // Si hay futuras versiones, añadir más bloques 'if' aquí
   }
 
   // --- Métodos para Gastos ---
@@ -94,17 +96,30 @@ class DatabaseHelper {
   }
 
   // Obtiene todos los gastos guardados en la base de datos
-  // Acepta parámetros opcionales para filtrar por categoría y ordenar
-  Future<List<Expense>> getExpenses({String? categoryFilter, String? orderBy}) async {
+  // Ahora acepta parámetros opcionales para filtrar por categoría, ordenar y buscar
+  Future<List<Expense>> getExpenses({String? categoryFilter, String? orderBy, String? searchQuery}) async {
     Database db = await database;
 
-    // Construye la cláusula WHERE si se proporciona un filtro de categoría
-    String? whereClause;
-    List<dynamic>? whereArgs;
-    if (categoryFilter != null && categoryFilter != 'Todas') { // 'Todas' es una opción para no filtrar
-      whereClause = 'category = ?';
-      whereArgs = [categoryFilter];
+    // Lista para construir las condiciones WHERE
+    List<String> whereParts = [];
+    List<dynamic> whereArgs = [];
+
+    // Filtro por categoría
+    if (categoryFilter != null && categoryFilter != 'Todas') {
+      whereParts.add('category = ?');
+      whereArgs.add(categoryFilter);
     }
+
+    // Búsqueda por descripción o categoría
+    if (searchQuery != null && searchQuery.isNotEmpty) {
+      whereParts.add('(description LIKE ? OR category LIKE ?)');
+      whereArgs.add('%$searchQuery%');
+      whereArgs.add('%$searchQuery%');
+    }
+
+    // Combina las partes de la cláusula WHERE
+    String? whereClause = whereParts.isEmpty ? null : whereParts.join(' AND ');
+
 
     // Define el ordenamiento por defecto si no se especifica uno
     String? order;
@@ -120,12 +135,12 @@ class DatabaseHelper {
       order = 'date DESC';
     }
 
-    // Consulta todos los registros de la tabla 'expenses' con filtro y ordenamiento opcionales.
+    // Consulta todos los registros de la tabla 'expenses' con filtro, búsqueda y ordenamiento opcionales.
     List<Map<String, dynamic>> maps = await db.query(
         'expenses',
         where: whereClause,
         whereArgs: whereArgs,
-        orderBy: order
+        orderBy: order // Aplica el ordenamiento
     );
 
     // Convierte la lista de Maps a una lista de objetos Expense.
@@ -133,6 +148,16 @@ class DatabaseHelper {
       return Expense.fromMap(maps[i]);
     });
   }
+
+  // Obtiene todos los gastos sin filtros ni ordenamiento (útil para exportar)
+  Future<List<Expense>> getAllExpensesForExport() async {
+    Database db = await database;
+    List<Map<String, dynamic>> maps = await db.query('expenses', orderBy: 'date DESC');
+    return List.generate(maps.length, (i) {
+      return Expense.fromMap(maps[i]);
+    });
+  }
+
 
   // Actualiza un gasto existente en la base de datos.
   Future<int> updateExpense(Expense expense) async {
