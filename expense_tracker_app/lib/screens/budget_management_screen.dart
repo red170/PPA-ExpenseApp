@@ -2,14 +2,10 @@ import 'package:flutter/material.dart';
 import '../models/budget.dart'; // Importa el modelo de presupuesto
 import '../database/database_helper.dart'; // Importa el helper de base de datos
 import 'add_edit_expense_screen.dart'; // Para acceder a la lista de categorías
-import 'package:intl/intl.dart'; // Para formatear moneda
 
 // Pantalla para gestionar los presupuestos por categoría.
 class BudgetManagementScreen extends StatefulWidget {
-  // Símbolo de moneda actual (opcional, si se pasa desde HomeScreen)
-  final String? currentCurrencySymbol;
-
-  const BudgetManagementScreen({super.key, this.currentCurrencySymbol});
+  const BudgetManagementScreen({super.key});
 
   @override
   _BudgetManagementScreenState createState() => _BudgetManagementScreenState();
@@ -47,10 +43,6 @@ class _BudgetManagementScreenState extends State<BudgetManagementScreen> {
       _selectedCategory = budget.category;
     }
 
-    // Usa el símbolo de moneda pasado o el valor por defecto '$'
-    final currencySymbol = widget.currentCurrencySymbol ?? '\$';
-    final currencyFormat = NumberFormat.currency(locale: 'es_SV', symbol: currencySymbol);
-
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -85,7 +77,7 @@ class _BudgetManagementScreenState extends State<BudgetManagementScreen> {
                 // Campo para el monto del presupuesto
                 TextFormField(
                   controller: _amountController,
-                  decoration: InputDecoration(labelText: 'Monto del Presupuesto (${currencySymbol})'), // Muestra el símbolo de moneda
+                  decoration: const InputDecoration(labelText: 'Monto del Presupuesto'),
                   keyboardType: TextInputType.numberWithOptions(decimal: true),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
@@ -168,10 +160,6 @@ class _BudgetManagementScreenState extends State<BudgetManagementScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Usa el símbolo de moneda pasado o el valor por defecto '$'
-    final currencySymbol = widget.currentCurrencySymbol ?? '\$';
-    final currencyFormat = NumberFormat.currency(locale: 'es_SV', symbol: currencySymbol);
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Gestión de Presupuestos'),
@@ -187,7 +175,7 @@ class _BudgetManagementScreenState extends State<BudgetManagementScreen> {
             margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
             child: ListTile(
               title: Text('Categoría: ${budget.category}'),
-              subtitle: Text('Presupuesto: ${currencyFormat.format(budget.amount)}'), // Formatea el monto
+              subtitle: Text('Presupuesto: \$${budget.amount.toStringAsFixed(2)}'),
               trailing: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [

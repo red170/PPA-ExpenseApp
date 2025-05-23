@@ -7,43 +7,15 @@ import 'add_edit_expense_screen.dart'; // Importa la pantalla para acceder a la 
 import '../models/budget.dart'; // Importa el modelo de presupuesto
 import 'budget_management_screen.dart'; // Importa la pantalla de gestión de presupuestos
 import 'summary_screen.dart'; // Importa la pantalla de resumen
-import 'package:csv/csv.dart'; // Para generar archivos CSV
-import 'package:path_provider/path_provider.dart'; // Para obtener rutas de directorio
-import 'dart:io'; // Para operaciones de archivo
-import 'package:permission_handler/permission_handler.dart'; // Para solicitar permisos de almacenamiento
-import 'package:shared_preferences/shared_preferences.dart'; // Para guardar preferencias de moneda
-
-// Mapa para asociar categorías con iconos de Material Design
-final Map<String, IconData> categoryIcons = {
-  'Comida': Icons.fastfood,
-  'Transporte': Icons.directions_bus,
-  'Entretenimiento': Icons.movie,
-  'Hogar': Icons.home,
-  'Compras': Icons.shopping_cart,
-  'Salud': Icons.medical_services,
-  'Educación': Icons.school,
-  'Viajes': Icons.flight,
-  'Otros': Icons.category,
-};
 
 
 // Esta es la pantalla principal que muestra los gastos y el total
 class HomeScreen extends StatefulWidget {
   // Función para cambiar el tema, recibida desde MyApp
   final VoidCallback toggleTheme;
-  // Símbolo de moneda actual, recibido de MyApp
-  final String currentCurrencySymbol;
-  // Función para actualizar el símbolo de moneda, recibida de MyApp
-  final ValueChanged<String> onCurrencySymbolChanged;
 
-
-  // Constructor que recibe las funciones y el símbolo de moneda
-  const HomeScreen({
-    super.key,
-    required this.toggleTheme,
-    required this.currentCurrencySymbol,
-    required this.onCurrencySymbolChanged,
-  });
+  // Constructor que recibe la función para cambiar el tema
+  const HomeScreen({super.key, required this.toggleTheme});
 
   @override
   _HomeScreenState createState() => _HomeScreenState();
@@ -61,7 +33,6 @@ class _HomeScreenState extends State<HomeScreen> {
   // Variables para controlar el filtro y el ordenamiento
   String? _selectedCategoryFilter; // Categoría seleccionada para filtrar
   String _selectedOrder = 'Fecha Desc'; // Criterio de ordenamiento seleccionado
-  TextEditingController _searchController = TextEditingController(); // Controlador para la barra de búsqueda
 
   // Opciones para el filtro de categoría (incluye 'Todas')
   List<String> _categoryFilterOptions = ['Todas', ...categories];
@@ -89,17 +60,6 @@ class _HomeScreenState extends State<HomeScreen> {
     _selectedCategoryFilter = _categoryFilterOptions.first;
     // Carga los gastos guardados en la base de datos con el filtro y ordenamiento iniciales
     _loadExpensesAndBudgets(); // Nueva función para cargar ambos
-
-    // Escucha cambios en la barra de búsqueda para recargar gastos
-    _searchController.addListener(() {
-      _loadExpensesAndBudgets();
-    });
-  }
-
-  @override
-  void dispose() {
-    _searchController.dispose(); // Limpia el controlador de búsqueda
-    super.dispose();
   }
 
   // Carga los gastos y los datos de presupuesto
@@ -108,13 +68,12 @@ class _HomeScreenState extends State<HomeScreen> {
     await _loadBudgetSummary(); // Carga el resumen del presupuesto
   }
 
-  // Carga los gastos desde la base de datos aplicando el filtro, búsqueda y ordenamiento actuales
+  // Carga los gastos desde la base de datos aplicando el filtro y ordenamiento actuales
   Future<void> _loadExpenses() async {
-    // Obtiene la lista de gastos de la base de datos, aplicando el filtro, búsqueda y ordenamiento
+    // Obtiene la lista de gastos de la base de datos, aplicando el filtro y ordenamiento
     List<Expense> expenses = await _dbHelper.getExpenses(
       categoryFilter: _selectedCategoryFilter,
       orderBy: _selectedOrder,
-      searchQuery: _searchController.text, // Pasa el texto de búsqueda
     );
 
     // Si la pantalla ya no está visible, no hagas nada más
@@ -214,98 +173,11 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // Exporta los gastos a un archivo CSV
-  Future<void> _exportExpensesToCsv() async {
-    // 1. Solicitar permisos de almacenamiento
-    var status = await Permission.storage.request();
-    if (!status.isGranted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Permiso de almacenamiento denegado.')),
-      );
-      return;
-    }
-
-    // 2. Obtener todos los gastos
-    List<Expense> allExpenses = await _dbHelper.getAllExpensesForExport();
-
-    // 3. Preparar los datos para CSV
-    List<List<dynamic>> csvData = [
-      ['ID', 'Descripción', 'Categoría', 'Monto', 'Fecha'], // Encabezados
-    ];
-    for (var expense in allExpenses) {
-      csvData.add([
-        expense.id,
-        expense.description,
-        expense.category,
-        expense.amount,
-        expense.date.toIso8601String(),
-      ]);
-    }
-
-    // 4. Convertir a formato CSV
-    String csv = const ListToCsvConverter().convert(csvData);
-
-    // 5. Guardar el archivo en el directorio de documentos
-    try {
-      final directory = await getExternalStorageDirectory(); // Para Android
-      // Si getExternalStorageDirectory() es nulo (ej. iOS), usar getApplicationDocumentsDirectory()
-      final path = directory?.path ?? (await getApplicationDocumentsDirectory()).path;
-      final file = File('$path/gastos_exportados.csv');
-      await file.writeAsString(csv);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Gastos exportados a: ${file.path}')),
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al exportar gastos: $e')),
-      );
-    }
-  }
-
-  // Muestra un diálogo para seleccionar la moneda
-  void _showCurrencySelectionDialog() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        String? tempSelectedSymbol = widget.currentCurrencySymbol; // Símbolo temporal para el diálogo
-
-        return AlertDialog(
-          title: const Text('Seleccionar Moneda'),
-          content: DropdownButton<String>(
-            value: tempSelectedSymbol,
-            onChanged: (String? newValue) {
-              if (newValue != null) {
-                tempSelectedSymbol = newValue; // Actualiza el valor temporal
-                Navigator.of(context).pop(); // Cierra el diálogo al seleccionar
-                widget.onCurrencySymbolChanged(newValue); // Llama a la función para actualizar en MyApp
-              }
-            },
-            items: <String>['\$', '€', '£', '¥', 'C\$'].map<DropdownMenuItem<String>>((String value) {
-              return DropdownMenuItem<String>(
-                value: value,
-                child: Text(value),
-              );
-            }).toList(),
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: const Text('Cancelar'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-
   // Dibuja la interfaz visual de la pantalla
   @override
   Widget build(BuildContext context) {
     // Herramienta para mostrar el total de gastos como moneda
-    final currencyFormat = NumberFormat.currency(locale: 'es_SV', symbol: widget.currentCurrencySymbol); // Usa el símbolo de moneda dinámico
+    final currencyFormat = NumberFormat.currency(locale: 'es_SV', symbol: '\$'); // Formato para El Salvador
 
     // Calcula el restante del presupuesto
     final double budgetRemaining = _totalBudgetForMonth - _totalSpentInBudgetedCategories;
@@ -341,18 +213,6 @@ class _HomeScreenState extends State<HomeScreen> {
               );
               _loadExpensesAndBudgets(); // Recargar al volver
             },
-          ),
-          // Botón para exportar gastos a CSV
-          IconButton(
-            icon: const Icon(Icons.download),
-            tooltip: 'Exportar Gastos',
-            onPressed: _exportExpensesToCsv,
-          ),
-          // Botón para seleccionar la moneda
-          IconButton(
-            icon: const Icon(Icons.currency_exchange),
-            tooltip: 'Seleccionar Moneda',
-            onPressed: _showCurrencySelectionDialog,
           ),
           // Botón para cambiar el tema (modo claro/oscuro)
           IconButton(
@@ -404,20 +264,6 @@ class _HomeScreenState extends State<HomeScreen> {
                     style: TextStyle(fontSize: 16.0, fontWeight: FontWeight.bold, color: remainingColor),
                   ),
                 ],
-              ),
-            ),
-          ),
-          // Barra de búsqueda
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-            child: TextField(
-              controller: _searchController,
-              decoration: InputDecoration(
-                labelText: 'Buscar Gasto (Descripción o Categoría)',
-                prefixIcon: const Icon(Icons.search),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8.0),
-                ),
               ),
             ),
           ),
@@ -506,14 +352,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                     ),
-                    // Icono de categoría a la izquierda del título
-                    title: Row(
-                      children: [
-                        Icon(categoryIcons[expense.category] ?? Icons.category, size: 20.0), // Muestra el icono de la categoría
-                        const SizedBox(width: 8.0),
-                        Expanded(child: Text(expense.description)), // La descripción del gasto
-                      ],
-                    ),
+                    title: Text(expense.description), // La descripción del gasto
                     subtitle: Text('${expense.category} - ${dateFormat.format(expense.date)}'), // La categoría y fecha del gasto
                     trailing: Row( // Elementos a la derecha (botones de editar y borrar)
                       mainAxisSize: MainAxisSize.min, // Hace que la fila ocupe el mínimo espacio

@@ -5,10 +5,7 @@ import 'add_edit_expense_screen.dart'; // Para acceder a la lista de categorías
 
 // Pantalla para mostrar un resumen de gastos por categoría.
 class SummaryScreen extends StatefulWidget {
-  // Símbolo de moneda actual (opcional, si se pasa desde HomeScreen)
-  final String? currentCurrencySymbol;
-
-  const SummaryScreen({super.key, this.currentCurrencySymbol});
+  const SummaryScreen({super.key});
 
   @override
   _SummaryScreenState createState() => _SummaryScreenState();
@@ -52,10 +49,13 @@ class _SummaryScreenState extends State<SummaryScreen> {
       initialDate: _selectedMonth,
       firstDate: DateTime(2000),
       lastDate: DateTime(2101),
+      // mode: DatePickerMode.year, // <--- ESTA LÍNEA ES LA QUE CAUSA EL ERROR Y HA SIDO ELIMINADA
       initialDatePickerMode: DatePickerMode.year, // Esta es la propiedad correcta para el modo inicial
     );
 
     if (picked != null && picked != _selectedMonth) {
+      // Para seleccionar un mes específico, podrías usar un paquete como 'month_picker_dialog'
+      // O simplemente mantener la fecha del día 1 del mes seleccionado
       setState(() {
         _selectedMonth = DateTime(picked.year, picked.month, 1);
       });
@@ -65,10 +65,8 @@ class _SummaryScreenState extends State<SummaryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Usa el símbolo de moneda pasado o el valor por defecto '$'
-    final currencySymbol = widget.currentCurrencySymbol ?? '\$';
-    final currencyFormat = NumberFormat.currency(locale: 'es_SV', symbol: currencySymbol);
-    final dateFormatMonthYear = DateFormat('MMMM y', 'es'); // Formato para mes y año
+    final currencyFormat = NumberFormat.currency(locale: 'es_SV', symbol: '\$');
+    final dateFormatMonthYear = DateFormat('MMMM y', 'es'); // Formato para mes y año, corregido a 'y' para año
 
     return Scaffold(
       appBar: AppBar(
