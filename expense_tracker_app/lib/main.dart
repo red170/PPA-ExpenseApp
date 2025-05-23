@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'screens/home_screen.dart'; // Carga la pantalla principal de la app
-import 'package:flutter_localizations/flutter_localizations.dart';
-
+import 'screens/welcome_screen.dart'; // NUEVA: Pantalla de Bienvenida
 
 // Importaciones para configurar la base de datos en diferentes sistemas
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
@@ -9,6 +8,7 @@ import 'dart:io'; // Para saber en qué sistema operativo estamos
 
 // Importación para guardar y cargar preferencias localmente
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_localizations/flutter_localizations.dart'; // Para soporte de idiomas
 
 // Aquí comienza la app
 void main() async { // main ahora es async porque necesitamos esperar al cargar preferencias
@@ -22,12 +22,11 @@ void main() async { // main ahora es async porque necesitamos esperar al cargar 
     databaseFactory = databaseFactoryFfi;
   }
 
-  // Inicia la app mostrando el widget MyApp
   runApp(MyApp()); // MyApp sigue siendo un StatefulWidget
 }
 
 // El widget principal que define la estructura base de la aplicación
-// Es un StatefulWidget para poder cambiar el tema y guardarlo
+// Es un StatefulWidget para poder cambiar el tema y guardar preferencias
 class MyApp extends StatefulWidget {
   // Constructor básico
   const MyApp({super.key});
@@ -39,42 +38,58 @@ class MyApp extends StatefulWidget {
 // El estado de la aplicación principal, maneja si está en modo oscuro o no
 class _MyAppState extends State<MyApp> {
   // Variable para saber si el modo oscuro está activado.
-  // Inicialmente es falso, pero se cargará la preferencia guardada.
   bool _isDarkMode = false;
+  // Símbolo de moneda seleccionado, por defecto '$'
+  String _currencySymbol = '\$';
+  // Variable para saber si la pantalla de bienvenida ya se mostró
+  bool _showWelcomeScreen = true;
 
-  // Se llama cuando el widget se crea. Aquí cargaremos la preferencia guardada.
+  // Se llama cuando el widget se crea. Aquí cargaremos las preferencias guardadas.
   @override
   void initState() {
     super.initState();
-    _loadThemePreference(); // Llama a la función para cargar la preferencia al iniciar
+    _loadPreferences(); // Llama a la función para cargar todas las preferencias
   }
 
-  // Carga la preferencia de tema guardada localmente
-  Future<void> _loadThemePreference() async {
-    // Obtiene una instancia de SharedPreferences
+  // Carga todas las preferencias guardadas localmente (tema, moneda, bienvenida)
+  Future<void> _loadPreferences() async {
     final prefs = await SharedPreferences.getInstance();
-    // Lee el valor booleano guardado con la clave 'isDarkMode'.
-    // Si no hay nada guardado, usa falso como valor por defecto.
     final isDarkMode = prefs.getBool('isDarkMode') ?? false;
+    final currencySymbol = prefs.getString('currencySymbol') ?? '\$'; // Carga el símbolo de moneda
+    final showWelcome = prefs.getBool('showWelcomeScreen') ?? true; // Carga si mostrar bienvenida
 
-    // Actualiza el estado de la aplicación con la preferencia cargada
     setState(() {
       _isDarkMode = isDarkMode;
+      _currencySymbol = currencySymbol;
+      _showWelcomeScreen = showWelcome;
     });
   }
 
   // Función para cambiar entre modo claro y oscuro y guardar la preferencia
   void _toggleTheme() async {
-    // Obtiene una instancia de SharedPreferences
     final prefs = await SharedPreferences.getInstance();
-
-    // Actualiza el estado y redibuja la interfaz
     setState(() {
-      _isDarkMode = !_isDarkMode; // Cambia al estado opuesto
+      _isDarkMode = !_isDarkMode;
     });
-
-    // Guarda el nuevo estado del modo oscuro localmente
     prefs.setBool('isDarkMode', _isDarkMode);
+  }
+
+  // Función para actualizar el símbolo de moneda y guardarlo
+  void _updateCurrencySymbol(String newSymbol) async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _currencySymbol = newSymbol;
+    });
+    prefs.setString('currencySymbol', newSymbol);
+  }
+
+  // Función para marcar que la pantalla de bienvenida ya se mostró
+  void _markWelcomeScreenShown() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('showWelcomeScreen', false);
+    setState(() {
+      _showWelcomeScreen = false;
+    });
   }
 
   // Dibuja la interfaz de la app
@@ -103,10 +118,7 @@ class _MyAppState extends State<MyApp> {
       // Controla qué tema usar basado en la variable _isDarkMode
       themeMode: _isDarkMode ? ThemeMode.dark : ThemeMode.light,
 
-      // La pantalla inicial, le pasamos la función para cambiar el tema
-      home: HomeScreen(toggleTheme: _toggleTheme),
-      debugShowCheckedModeBanner: false, // Oculta una etiqueta de prueba
-
+      // Configuración de localización para idiomas (necesario para intl)
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
@@ -117,6 +129,16 @@ class _MyAppState extends State<MyApp> {
         Locale('es', ''), // Español
         Locale('es', 'SV'), // Español de El Salvador (opcional, si quieres más específico)
       ],
+
+      // La pantalla inicial: si es la primera vez, muestra la bienvenida; si no, la principal.
+      home: _showWelcomeScreen
+          ? WelcomeScreen(onWelcomeComplete: _markWelcomeScreenShown)
+          : HomeScreen(
+        toggleTheme: _toggleTheme,
+        currentCurrencySymbol: _currencySymbol,
+        onCurrencySymbolChanged: _updateCurrencySymbol,
+      ),
+      debugShowCheckedModeBanner: false, // Oculta una etiqueta de prueba
     );
   }
 }
