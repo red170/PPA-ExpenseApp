@@ -149,15 +149,7 @@ class DatabaseHelper {
     });
   }
 
-  // Obtiene todos los gastos sin filtros ni ordenamiento (útil para exportar)
-  Future<List<Expense>> getAllExpensesForExport() async {
-    Database db = await database;
-    List<Map<String, dynamic>> maps = await db.query('expenses', orderBy: 'date DESC');
-    return List.generate(maps.length, (i) {
-      return Expense.fromMap(maps[i]);
-    });
-  }
-
+  // La función getAllExpensesForExport() ha sido eliminada.
 
   // Actualiza un gasto existente en la base de datos.
   Future<int> updateExpense(Expense expense) async {
@@ -182,7 +174,7 @@ class DatabaseHelper {
     );
   }
 
-  // --- Nuevos Métodos para Presupuestos ---
+  // --- Métodos para Presupuestos ---
 
   // Guarda un nuevo presupuesto en la base de datos.
   Future<int> insertBudget(Budget budget) async {

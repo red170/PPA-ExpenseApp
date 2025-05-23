@@ -7,12 +7,7 @@ import 'add_edit_expense_screen.dart'; // Importa la pantalla para acceder a la 
 import '../models/budget.dart'; // Importa el modelo de presupuesto
 import 'budget_management_screen.dart'; // Importa la pantalla de gestión de presupuestos
 import 'summary_screen.dart'; // Importa la pantalla de resumen
-import 'package:csv/csv.dart'; // Para generar archivos CSV
-import 'package:path_provider/path_provider.dart'; // Para obtener rutas de directorio
-import 'dart:io'; // Para operaciones de archivo (Platform.isAndroid, etc.)
-import 'package:permission_handler/permission_handler.dart'; // Para solicitar permisos de almacenamiento
-import 'package:shared_preferences/shared_preferences.dart'; // Para guardar preferencias de moneda
-import 'package:device_info_plus/device_info_plus.dart'; // Importación para device_info_plus
+// Se han eliminado las importaciones de 'csv', 'path_provider', 'dart:io', 'permission_handler', 'device_info_plus'
 
 // Mapa para asociar categorías con iconos de Material Design
 final Map<String, IconData> categoryIcons = {
@@ -215,105 +210,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // Exporta los gastos a un archivo CSV
-  Future<void> _exportExpensesToCsv() async {
-    // Lógica para solicitar permisos según la versión de Android
-    if (Platform.isAndroid) {
-      final AndroidDeviceInfo androidInfo = await DeviceInfoPlugin().androidInfo;
-      // CORRECCIÓN: Acceder a sdkInt a través de la propiedad 'version'
-      final int sdkInt = androidInfo.version.sdkInt;
-
-      if (sdkInt >= 30) { // Android 11 (API 30) y superiores
-        if (!await Permission.manageExternalStorage.isGranted) {
-          // Si no tiene el permiso especial, redirigir al usuario a la configuración
-          if (!mounted) return;
-          showDialog(
-            context: context,
-            builder: (BuildContext context) {
-              return AlertDialog(
-                title: const Text('Permiso de Almacenamiento Requerido'),
-                content: const Text('Para exportar a la carpeta de Descargas en Android 11+, necesitas otorgar el permiso "Acceso a todos los archivos" en la configuración de la aplicación. Por favor, haz clic en "Ir a Configuración" y actívalo.'),
-                actions: <Widget>[
-                  TextButton(
-                    child: const Text('Cancelar'),
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                    },
-                  ),
-                  TextButton(
-                    child: const Text('Ir a Configuración'),
-                    onPressed: () async {
-                      Navigator.of(context).pop();
-                      await openAppSettings(); // Abre la configuración de la app para que el usuario active el permiso
-                    },
-                  ),
-                ],
-              );
-            },
-          );
-          return; // Detener la ejecución si el permiso no está concedido
-        }
-      } else { // Android 10 (API 29) y anteriores
-        var status = await Permission.storage.request();
-        if (!status.isGranted) {
-          if (!mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Permiso de almacenamiento denegado. No se puede guardar en Descargas.')),
-          );
-          return;
-        }
-      }
-    }
-
-
-    // Obtener todos los gastos
-    List<Expense> allExpenses = await _dbHelper.getAllExpensesForExport();
-
-    // Preparar los datos para CSV
-    List<List<dynamic>> csvData = [
-      ['ID', 'Descripción', 'Categoría', 'Monto', 'Fecha'], // Encabezados
-    ];
-    for (var expense in allExpenses) {
-      csvData.add([
-        expense.id,
-        expense.description,
-        expense.category,
-        expense.amount,
-        expense.date.toIso8601String(),
-      ]);
-    }
-
-    // Convertir a formato CSV
-    String csv = const ListToCsvConverter().convert(csvData);
-
-    // Guardar el archivo en la carpeta de Descargas
-    try {
-      final directory = await getDownloadsDirectory(); // Obtener el directorio de Descargas
-      if (directory == null) {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('No se pudo encontrar el directorio de Descargas.')),
-        );
-        return;
-      }
-
-      final file = File('${directory.path}/gastos_exportados.csv');
-      await file.writeAsString(csv);
-
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Gastos exportados a: ${file.path}\n(Puede que necesites un explorador de archivos para verlo)'),
-          duration: const Duration(seconds: 5), // Mostrar por más tiempo
-        ),
-      );
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al exportar gastos: $e')),
-      );
-    }
-  }
+  // La función _exportExpensesToCsv() ha sido eliminada.
 
   // Muestra un diálogo para seleccionar la moneda
   void _showCurrencySelectionDialog() {
@@ -395,12 +292,12 @@ class _HomeScreenState extends State<HomeScreen> {
               _loadExpensesAndBudgets(); // Recargar al volver
             },
           ),
-          // Botón para exportar gastos a CSV
-          IconButton(
-            icon: const Icon(Icons.download),
-            tooltip: 'Exportar Gastos',
-            onPressed: _exportExpensesToCsv,
-          ),
+          // El botón para exportar gastos a CSV ha sido eliminado.
+          // IconButton(
+          //   icon: const Icon(Icons.download),
+          //   tooltip: 'Exportar Gastos',
+          //   onPressed: _exportExpensesToCsv, // Esta función ya no existe
+          // ),
           // Botón para seleccionar la moneda
           IconButton(
             icon: const Icon(Icons.currency_exchange),

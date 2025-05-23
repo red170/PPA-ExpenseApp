@@ -7,7 +7,12 @@ plugins {
 
 android {
     namespace = "com.example.expense_tracker_app"
-    compileSdk = flutter.compileSdkVersion
+    // CORRECCIÓN: Aseguramos que compileSdk sea al menos 34.
+    // Esto resuelve el error "Attribute android:requestLegacyExternalStorage is not allowed here"
+    // en AndroidManifest.xml si flutter.compileSdkVersion es demasiado bajo.
+    // Se recomienda mantenerlo en la última versión estable (ej. 34).
+    compileSdk = 34 // Antes: flutter.compileSdkVersion
+
     ndkVersion = "27.0.12077973"
 
     compileOptions {
@@ -25,7 +30,9 @@ android {
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
+        // CORRECCIÓN: Aseguramos que targetSdk sea al menos 34.
+        // Es buena práctica que targetSdk coincida con compileSdk.
+        targetSdk = 34 // Antes: flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }

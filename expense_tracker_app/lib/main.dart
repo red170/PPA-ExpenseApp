@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'screens/home_screen.dart'; // Carga la pantalla principal de la app
-import 'screens/welcome_screen.dart'; // NUEVA: Pantalla de Bienvenida
+import 'screens/welcome_screen.dart'; // Importa la Pantalla de Bienvenida
 
 // Importaciones para configurar la base de datos en diferentes sistemas
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
@@ -22,7 +22,7 @@ void main() async { // main ahora es async porque necesitamos esperar al cargar 
     databaseFactory = databaseFactoryFfi;
   }
 
-  runApp(MyApp()); // MyApp sigue siendo un StatefulWidget
+  runApp(const MyApp()); // MyApp sigue siendo un StatefulWidget
 }
 
 // El widget principal que define la estructura base de la aplicación
@@ -92,6 +92,8 @@ class _MyAppState extends State<MyApp> {
     });
   }
 
+  // Se eliminó la función _exportToCsv() y _showUserMessage() ya que no se necesitan.
+
   // Dibuja la interfaz de la app
   @override
   Widget build(BuildContext context) {
@@ -109,11 +111,6 @@ class _MyAppState extends State<MyApp> {
         primarySwatch: Colors.blueGrey, // Puedes usar otro color primario para el modo oscuro si quieres
         visualDensity: VisualDensity.adaptivePlatformDensity,
         brightness: Brightness.dark, // Tema oscuro
-        // Puedes personalizar más colores aquí para el modo oscuro
-        // Por ejemplo:
-        // cardColor: Colors.grey[850],
-        // scaffoldBackgroundColor: Colors.black,
-        // appBarTheme: AppBarTheme(backgroundColor: Colors.grey[900]),
       ),
       // Controla qué tema usar basado en la variable _isDarkMode
       themeMode: _isDarkMode ? ThemeMode.dark : ThemeMode.light,
